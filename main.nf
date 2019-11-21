@@ -16,7 +16,7 @@ Channel
 Channel
   .fromPath (params.fasta)
   .ifEmpty { exit 1, "FASTA file not found ${params.fasta}" }
-  .set { fasta }
+  .into { fasta; fasta_alignment_expression }
 Channel
   .fromPath (params.gtf)
   .ifEmpty { exit 1, "GTF file not found ${params.gtf}" }
@@ -35,7 +35,7 @@ process qual_stat {
 
   output:
   file "filter" into filtered_reads
-  file "**filtered_trimmed" into filtered_trimmed
+  set val(name), file("**filtered_trimmed") into filtered_trimmed
 
   script:
   """
@@ -73,19 +73,20 @@ if ( !index.exists() ) {
   Alignment expression
 ---------------------------------------------------*/
 
-// process alignment_expression {
-//   tag "$name"
-//   publishDir "${params.outdir}", mode: 'copy'
+process alignment_expression {
+  tag "$name"
+  publishDir "${params.outdir}", mode: 'copy'
 
-//   input:
-//   set val(name), file(reads) from filtered_trimmed
-//   each file(fasta) from fasta
+  input:
+  set val(name), file(reads) from filtered_trimmed
+  each file(fasta) from fasta_alignment_expression
+  file(indexes) from indexed
 
-//   output:
-//   file "filter" into filtered_reads
+  output:
+  file "*" into aligned_expression
 
-//   script:
-//   """
-//   rsem-calculate-expression -p ${task.cpus} ${params.phredquals} --seed-length ${params.seed_length} --forward-prob ${params.strand_specific} --time --output-genome-bam --bowtie2 --paired-end ${reads[0]} ${reads[1]} ${fasta.baseName} $name
-//   """
-// }
+  script:
+  """
+  rsem-calculate-expression -p ${task.cpus} ${params.phredquals} --seed-length ${params.seed_length} --forward-prob ${params.strand_specific} --time --output-genome-bam --bowtie2 --paired-end ${reads[0]} ${reads[1]} ${fasta.baseName} $name
+  """
+}

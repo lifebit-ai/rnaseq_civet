@@ -35,7 +35,7 @@ process qual_stat {
 
   output:
   file "filter" into filtered_reads
-  set val(name), file("**filtered_trimmed") into filtered_trimmed
+  set val(name), file("**filtered_trimmed") into (filtered_trimmed, filtered_trimmed_fastqc)
 
   script:
   """

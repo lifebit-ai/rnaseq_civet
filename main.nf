@@ -90,3 +90,23 @@ process alignment_expression {
   rsem-calculate-expression -p ${task.cpus} ${params.phredquals} --seed-length ${params.seed_length} --forward-prob ${params.strand_specific} --time --output-genome-bam --bowtie2 --paired-end ${reads[0]} ${reads[1]} ${fasta.baseName} $name
   """
 }
+
+/*--------------------------------------------------
+  Run FastQC for quality control of input reads
+---------------------------------------------------*/
+
+process fastqc {
+  tag "$name"
+  publishDir "${params.outdir}/fastqc", mode: 'copy'
+
+  input:
+  set val(name), file(reads) from filtered_trimmed_fastqc
+
+  output:
+  file "*_fastqc.{zip,html}" into fastqc_results
+
+  script:
+  """
+  fastqc $reads
+  """
+}
